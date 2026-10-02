@@ -53,7 +53,7 @@ class ProductController extends Controller
 
     public function show(Product $product): ProductResource
     {
-        $product->load(['stockItems' => fn ($q) => $q->with(['sector.warehouse', 'updatedBy'])->orderByDesc('quantity')])
+        $product->load(['stockItems' => fn ($q) => $q->with(['product', 'sector.warehouse', 'updatedBy'])->orderByDesc('quantity')])
             ->loadSum('stockItems', 'quantity')
             ->loadCount('stockItems');
 

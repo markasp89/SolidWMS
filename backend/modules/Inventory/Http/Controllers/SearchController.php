@@ -19,7 +19,7 @@ class SearchController extends Controller
 
         $products = Product::query()
             ->search($request->string('q')->toString())
-            ->with(['stockItems' => fn ($q) => $q->with(['sector.warehouse', 'updatedBy'])->orderByDesc('quantity')])
+            ->with(['stockItems' => fn ($q) => $q->with(['product', 'sector.warehouse', 'updatedBy'])->orderByDesc('quantity')])
             ->withSum('stockItems', 'quantity')
             ->withCount('stockItems')
             ->orderBy('name')
