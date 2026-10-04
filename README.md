@@ -12,19 +12,40 @@ w którym magazynie i sektorze go szukać. Sektor jest podświetlony na rzucie m
 
 | Rola | Co może |
 | --- | --- |
-| **Administrator** | Tworzy magazyny, wgrywa rzut z góry (PNG/JPG/WEBP/GIF), rysuje na nim sektory (prostokąt lub wielokąt, przesuwanie, edycja wierzchołków), zarządza użytkownikami, eksportuje i importuje dane (JSON). Ma też wszystkie uprawnienia pracownika. |
-| **Pracownik** | Dodaje i edytuje produkty, przyjmuje towar do sektora, wydaje go, przenosi między sektorami, koryguje ilości i dopisuje uwagi (np. „paleta przy bramie 2”). |
+| **Administrator** | Wszystko: magazyny, rzuty i sektory (rysowanie prostokątów i wielokątów), piętra, użytkownicy, dostęp do magazynów, moduły, eksport/import, integracje. |
+| **Kierownik zmiany** | Wszystko, co pracownik, a do tego zatwierdzanie inwentaryzacji, raporty, stany minimalne i usuwanie produktów. Dostaje powiadomienia o niskim stanie. |
+| **Pracownik** | Produkty, przyjęcia, wydania, przesunięcia, korekty, palety, dokumenty PZ/WZ, kompletacja, liczenie inwentaryzacji, zdjęcia. |
 
-- **„Gdzie jest?”**: wyszukiwarka po nazwie, SKU lub kodzie kreskowym. Pokazuje lokalizacje i mapę
-  z podświetlonymi sektorami.
-- **Mapa magazynu**: kliknięcie sektora pokazuje towar w nim. Na mapie widać liczbę produktów
-  w każdym sektorze.
-- **Historia operacji**: kto, kiedy i skąd/dokąd przeniósł towar (przyjęcie, wydanie, przesunięcie,
-  korekta).
-- **Ustawienia → Eksport/Import**: eksport zapisuje plik JSON na dysk (opcjonalnie z obrazami
-  rzutów). Import otwiera okno, w którym można przesłać plik lub wkleić JSON. Są dwa tryby:
-  *scal* (upsert po kodach) i *zastąp*.
-- Interfejs działa na telefonie i tablecie.
+Podstawa (zawsze włączona):
+
+- **„Gdzie jest?”**: wyszukiwarka po nazwie, SKU lub kodzie kreskowym, z mapą i podświetlonymi sektorami.
+- **Mapa magazynu**: rzut z góry, sektory z liczbą produktów, towar w wybranym sektorze.
+- **Historia operacji**: kto, kiedy i skąd/dokąd przeniósł towar.
+- **Ustawienia**: włączanie i wyłączanie modułów, eksport i import JSON.
+
+## Moduły opcjonalne
+
+Administrator włącza je i wyłącza w **Ustawienia → Moduły**, bez restartu i bez utraty danych.
+Wyłączony moduł znika z menu i ekranów, a jego endpointy API zwracają 404.
+
+| Grupa | Moduł (`klucz`) | Co daje |
+| --- | --- | --- |
+| Hala | Skanowanie kodów (`scanning`) | Przycisk skanera w górnym pasku i przy wyborze sektora/produktu. Działa aparatem telefonu (`@zxing/browser`) lub czytnikiem USB/Bluetooth. |
+| Hala | Etykiety QR (`labels`) | Druk etykiet dla sektorów, palet i produktów (`SWMS:S:<id>`, `SWMS:P:<kod>`, `SWMS:I:<sku>`). |
+| Hala | Palety (`pallets`) | Paleta z numerem (P-00001) i zawartością. Przeniesienie całej palety jednym ruchem, historia „kto przestawił paletę”. |
+| Hala | Aplikacja i offline (`offline`) | PWA do zainstalowania na telefonie. Ostatnio widziane dane są dostępne bez sieci, operacje trafiają do kolejki i wysyłają się po powrocie zasięgu (z kluczem idempotencji). |
+| Lokalizacja | Miejsca w sektorze (`slots`) | Półka/poziom/gniazdo, np. `A1-03-2`. |
+| Lokalizacja | Piętra i hale (`floors`) | Kilka rzutów w jednym magazynie, przełącznik pięter. |
+| Lokalizacja | Podpowiedzi (`suggestions`) | Przy przyjęciu podpowiada, gdzie produkt już leży albo gdzie odkładano go najczęściej. |
+| Kontrola | Inwentaryzacja (`stocktaking`) | Liczenie sektora na telefonie, porównanie z systemem, jedna zbiorcza korekta (kierownik). |
+| Kontrola | Partie i daty (`batches`) | Partia i data ważności, kolejność FEFO, lista kończących się terminów. |
+| Kontrola | Stany minimalne (`alerts`) | Powiadomienia w aplikacji i opcjonalnie e-mailem (`ALERTS_MAIL=true`). |
+| Kontrola | Zdjęcia (`photos`) | Zdjęcia produktu, palety i miejsca odłożenia towaru. Zdjęcia z telefonu są zmniejszane do 1600 px. |
+| Procesy | Dokumenty PZ/WZ (`documents`) | Wiele pozycji na jednym dokumencie. WZ pobiera towar automatycznie wg FEFO. PDF do druku. |
+| Procesy | Kompletacja (`picking`) | Lista zbierania posortowana po sektorach, zbieranie na telefonie. |
+| Procesy | Raporty (`reports`) | Zajętość sektorów, rotacja towaru, aktywność pracowników, eksport CSV (Excel). |
+| Organizacja | Dostęp do magazynów (`warehouse_access`) | Ograniczenie użytkownika do wybranych magazynów. |
+| Organizacja | Integracje (`integrations`) | Klucze API (`/api/integration/v1`) i podpisane webhooki (HMAC-SHA256), np. do synchronizacji z Subiektem GT lub sklepem. |
 
 ## Uruchomienie (dev)
 
@@ -51,10 +72,14 @@ Konta demo (hasło `password`):
 - `admin@solidwms.local`: administrator
 - `pracownik@solidwms.local`: pracownik
 
+Dane demo zawierają magazyn z rzutem i sektorami, produkty z miejscami, partiami i stanami
+minimalnymi oraz paletę P-00001.
+
 W produkcji zbuduj frontend (`npm run build`) i serwuj `frontend/dist` (np. przez nginx)
 z przekierowaniem `/api` do Laravela. Jeśli API stoi pod inną domeną, ustaw `VITE_API_URL`.
 Zamiast SQLite można użyć MySQL lub PostgreSQL (zmienne `DB_*` w `backend/.env`).
 
+> Skanowanie aparatem i instalacja aplikacji na telefonie wymagają HTTPS (poza `localhost`).
 > Import dużego pliku z obrazami rzutów wymaga odpowiednio wysokich `post_max_size` /
 > `upload_max_filesize` w PHP.
 
@@ -69,35 +94,40 @@ cd frontend && npm run build && npm run lint
 
 ### Backend: `backend/modules/<Moduł>`
 
-Moduły włącza się w `backend/config/modules.php` (lista service providerów).
-Każdy moduł dziedziczy po `Modules\Core\Support\ModuleServiceProvider`, który automatycznie ładuje:
+Lista modułów, ich zależności i domyślny stan są w `backend/config/modules.php`. Stan włączenia
+zapisuje `Modules\Core\Services\ModuleManager` w tabeli `module_states`.
 
-- `routes/api.php` (prefiks `/api`),
-- `Database/Migrations`.
+Każdy moduł ma service provider dziedziczący po `Modules\Core\Support\ModuleServiceProvider`, który:
 
-| Moduł | Zawartość |
-| --- | --- |
-| `Core` | bazowy provider modułów, enum `Role`, middleware `role:admin` |
-| `Auth` | logowanie i wylogowanie, tokeny Sanctum, blokada kont nieaktywnych |
-| `Users` | CRUD użytkowników (admin) |
-| `Warehouses` | magazyny, rzuty (prywatny dysk + podpisany URL), sektory jako wielokąty |
-| `Inventory` | produkty, lokalizacje (`stock_items`), historia (`stock_movements`), wyszukiwarka, pulpit |
-| `Settings` | eksport i import danych JSON |
+- ładuje `routes/api.php` (prefiks `/api`). Trasy modułów opcjonalnych dostają middleware
+  `module:<klucz>`, więc po wyłączeniu modułu zwracają 404.
+- ładuje `Database/Migrations`. Tabele istnieją zawsze, dzięki czemu moduł można włączyć w każdej chwili.
 
-Zależności idą w jedną stronę: `Inventory → Warehouses`, `Settings → Inventory, Warehouses`.
-`Warehouses` nie zna `Inventory`. Blokadę usuwania sektora z towarem `Inventory` rejestruje przez
-event modelu `Sector::deleting`.
+Moduły nie wołają się nawzajem bezpośrednio:
+
+- **Zdarzenia**: `Modules\Core\Events\DomainEvent` (`stock.movement`, `product.saved`,
+  `pallet.moved`, `document.posted`, …). Słuchają ich np. alerty i webhooki.
+- **Kontrakty**: `Modules\Core\Contracts\WarehouseScope` decyduje, które magazyny widzi użytkownik.
+  Moduł `warehouse_access` podmienia domyślną implementację.
+- **Jedno miejsce zmian stanów**: wszystkie zmiany idą przez `Inventory\Services\StockService`
+  (dostęp, historia, zdarzenia). Lokalizacja to produkt + sektor + opcjonalnie miejsce, partia,
+  data ważności i paleta.
+- **Idempotencja**: żądania z nagłówkiem `Idempotency-Key` wykonują się tylko raz. Korzysta z tego
+  kolejka offline.
 
 ### Frontend: `frontend/src/modules/<moduł>`
 
-Każdy moduł eksportuje obiekt `AppModule` (trasy, pozycje menu, role, rozszerzenia). Lista włączonych
-modułów jest w `src/app/modules.ts`. Moduły nie importują nawzajem swoich stron. Dokładają UI do
-innych modułów przez **punkty rozszerzeń**:
+Każdy moduł eksportuje `AppModule` (`key` zgodny z backendem, trasy, menu, role, rozszerzenia,
+`activate`/`deactivate`). Lista jest w `src/app/modules.ts`, a stan włączenia przychodzi z `GET /api/modules`.
+Moduły dokładają UI do innych modułów przez **punkty rozszerzeń** (`<Extension name="…">`):
 
-- `warehouse.sectorPanel`: panel wybranego sektora (Inventory pokazuje tu towar),
-- `warehouse.mapOverlay`: dodatkowa warstwa SVG na mapie (Inventory rysuje liczniki produktów).
-
-`src/core` zawiera wspólne elementy: klient API, autoryzację, layout, formularze, modale i powiadomienia.
+| Punkt | Kto korzysta |
+| --- | --- |
+| `topbar.actions` | skaner, kolejka offline, powiadomienia |
+| `dashboard.widgets` | niski stan, kończące się terminy |
+| `warehouse.sectorPanel`, `warehouse.mapOverlay`, `sector.actions` | towar i palety w sektorze, liczniki na mapie, etykieta QR, inwentaryzacja |
+| `product.sidebar`, `pallet.sidebar`, `location.actions` | stan minimalny, zdjęcia |
+| `user.actions` | dostęp do magazynów |
 
 ### Formularze w oknach modalnych
 
@@ -129,12 +159,16 @@ Wszystkie endpointy poza logowaniem wymagają nagłówka `Authorization: Bearer 
 | `GET /api/movements` | historia | wszyscy |
 | `GET /api/settings/export?include_images=1`, `POST /api/settings/import` | eksport i import JSON | admin |
 
+Moduły opcjonalne mają własne endpointy: `pallets`, `floors`, `stocktakes`, `documents`, `picking`,
+`reports/*`, `batches/expiring`, `alerts/low-stock`, `notifications`, `photos`, `products/{id}/suggested-locations`,
+`users/{id}/warehouses`, `integrations/*`, `modules`. Pełną listę wypisze `php artisan route:list --path=api`.
+
 ### Format pliku eksportu
 
 ```json
 {
   "format": "solidwms",
-  "version": 1,
+  "version": 2,
   "exported_at": "2026-10-02T12:00:00+00:00",
   "warehouses": [
     {
@@ -151,6 +185,9 @@ Wszystkie endpointy poza logowaniem wymagają nagłówka `Authorization: Bearer 
 }
 ```
 
-Rekordy są dopasowywane po kluczach biznesowych (kod magazynu, kod sektora w magazynie, SKU), a nie
+Wersja 2 dodaje `floors` (w magazynie), `floor` (w sektorze), `pallets`, `min_quantity` oraz w `stock` pola
+`slot`, `batch`, `expires_at` i `pallet`. Pliki w wersji 1 nadal się importują.
+
+Rekordy są dopasowywane po kluczach biznesowych (kod magazynu, nazwa piętra, kod sektora w magazynie, SKU, numer palety), a nie
 po ID. Dzięki temu plik można przenosić między instalacjami. Import działa w jednej transakcji:
 jeśli plik jest błędny, nic się nie zmienia.

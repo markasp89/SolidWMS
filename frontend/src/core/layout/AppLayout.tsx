@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/core/auth/AuthContext'
-import { useModules } from '@/core/modules/registry'
+import { Extension, useModules } from '@/core/modules/registry'
 import { Icon } from '@/core/ui/Icon'
 
 export function AppLayout() {
@@ -73,6 +73,9 @@ export function AppLayout() {
               aria-label="Szukaj produktu"
             />
           </form>
+          <div className="topbar-actions">
+            <Extension name="topbar.actions" props={{}} />
+          </div>
         </header>
         <main className="content">
           <Outlet />

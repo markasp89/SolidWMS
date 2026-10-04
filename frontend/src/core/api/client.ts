@@ -48,7 +48,42 @@ export interface RequestOptions {
   body?: unknown
   query?: Query
   signal?: AbortSignal
+  /** May be stored and sent later when there is no connection (offline module). */
+  queueable?: boolean
+  /** Sent as Idempotency-Key so a retried request is executed only once. */
+  idempotencyKey?: string
 }
+
+/** Result of a request that was put into the offline queue instead of being sent. */
+export interface Queued {
+  queued: true
+  id: string
+}
+
+export const isQueued = (value: unknown): value is Queued =>
+  typeof value === 'object' && value !== null && (value as Queued).queued === true
+
+export interface QueuedRequest {
+  id: string
+  path: string
+  method: string
+  body: unknown
+  label?: string
+  createdAt: string
+}
+
+type OfflineHandler = (request: QueuedRequest) => Queued
+let offlineHandler: OfflineHandler | null = null
+
+/** Installed by the offline module. */
+export function setOfflineHandler(handler: OfflineHandler | null) {
+  offlineHandler = handler
+}
+
+export const newRequestId = (): string =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`
 
 function buildUrl(path: string, query?: Query): string {
   const url = apiUrl(`/api${path}`)
@@ -65,6 +100,9 @@ export async function rawRequest(path: string, options: RequestOptions = {}): Pr
   const headers: Record<string, string> = { Accept: 'application/json' }
   const token = tokenStore.get()
   if (token) headers.Authorization = `Bearer ${token}`
+  const method = options.method ?? (options.body !== undefined ? 'POST' : 'GET')
+  const idempotencyKey = options.idempotencyKey ?? (method !== 'GET' ? newRequestId() : undefined)
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey
 
   let body: BodyInit | undefined
   if (options.body instanceof FormData) {
@@ -77,7 +115,7 @@ export async function rawRequest(path: string, options: RequestOptions = {}): Pr
   let response: Response
   try {
     response = await fetch(buildUrl(path, options.query), {
-      method: options.method ?? (body ? 'POST' : 'GET'),
+      method,
       headers,
       body,
       signal: options.signal,
@@ -95,7 +133,24 @@ export async function rawRequest(path: string, options: RequestOptions = {}): Pr
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const response = await rawRequest(path, options)
+  const method = options.method ?? (options.body !== undefined ? 'POST' : 'GET')
+  const idempotencyKey = options.idempotencyKey ?? (method !== 'GET' ? newRequestId() : undefined)
+  let response: Response
+  try {
+    response = await rawRequest(path, { ...options, method, idempotencyKey })
+  } catch (error) {
+    // No connection: queue the operation if allowed (offline module).
+    if (error instanceof ApiError && error.status === 0 && options.queueable && offlineHandler && !(options.body instanceof FormData)) {
+      return offlineHandler({
+        id: idempotencyKey!,
+        path,
+        method,
+        body: options.body,
+        createdAt: new Date().toISOString(),
+      }) as T
+    }
+    throw error
+  }
   if (response.status === 204) return undefined as T
   return (await response.json()) as T
 }
@@ -136,8 +191,11 @@ async function toApiError(response: Response): Promise<ApiError> {
 
 export const api = {
   get: <T>(path: string, query?: Query, signal?: AbortSignal) => request<T>(path, { query, signal }),
-  post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body: body ?? {} }),
-  patch: <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH', body }),
+  post: <T>(path: string, body?: unknown, options: Partial<RequestOptions> = {}) =>
+    request<T>(path, { ...options, method: 'POST', body: body ?? {} }),
+  put: <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT', body }),
+  patch: <T>(path: string, body: unknown, options: Partial<RequestOptions> = {}) =>
+    request<T>(path, { ...options, method: 'PATCH', body }),
   delete: <T = void>(path: string) => request<T>(path, { method: 'DELETE' }),
 }
 

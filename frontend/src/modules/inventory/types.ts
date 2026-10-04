@@ -10,6 +10,13 @@ export interface StockItem {
   id: number
   product_id: number
   sector_id: number
+  /** Shelf / level / bin within the sector (module "slots"). */
+  slot: string | null
+  /** Batch number and expiry date (module "batches"). */
+  batch: string | null
+  expires_at: string | null
+  pallet_id: number | null
+  pallet?: { id: number; code: string } | null
   quantity: number
   note: string | null
   product?: { id: number; sku: string; name: string; unit: string; barcode: string | null }
@@ -39,6 +46,10 @@ export interface Movement {
   type_label: string
   quantity: number
   note: string | null
+  reference: string | null
+  slot: string | null
+  batch: string | null
+  pallet_id: number | null
   product?: { id: number; sku: string; name: string; unit: string }
   from_sector: SectorSummary | null
   to_sector: SectorSummary | null
@@ -50,4 +61,11 @@ export interface SectorStockSummary {
   sector_id: number
   products_count: number
   total_quantity: number
+}
+
+/** Optional location dimensions sent with stock operations. */
+export interface LocationDimensions {
+  slot?: string | null
+  batch?: string | null
+  expires_at?: string | null
 }

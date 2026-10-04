@@ -1,0 +1,82 @@
+.labels-pick {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px 16px;
+}
+.labels-product {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.labels-filters {
+  margin-top: 12px;
+}
+.label-sheet {
+  display: grid;
+  gap: 4mm;
+}
+.label-sheet-small {
+  grid-template-columns: repeat(3, 1fr);
+}
+.label-sheet-large {
+  grid-template-columns: repeat(2, 1fr);
+}
+.label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: #fff;
+  border: 1px dashed #94a3b8;
+  border-left: 8px solid #0f172a;
+  break-inside: avoid;
+  color: #000;
+}
+.label-text {
+  min-width: 0;
+}
+.label-title {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  word-break: break-all;
+}
+.label-sheet-large .label-title {
+  font-size: 40px;
+}
+.label-subtitle {
+  font-size: 12px;
+  margin-top: 4px;
+}
+.label-brand {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 6px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.qr {
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+.qr-loading {
+  background: #f1f5f9;
+}
+@media (max-width: 700px) {
+  .label-sheet-small,
+  .label-sheet-large {
+    grid-template-columns: 1fr;
+  }
+}
+@media print {
+  .label-sheet-small {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .label-sheet-large {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

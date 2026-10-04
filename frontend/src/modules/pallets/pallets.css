@@ -1,0 +1,41 @@
+.pallet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.pallet-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 5px solid #b45309;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: inherit;
+}
+.pallet-tile:hover {
+  text-decoration: none;
+  border-color: var(--primary);
+}
+.pallet-tile-code,
+.pallet-code {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-weight: 700;
+  font-size: 18px;
+}
+.pallet-tile-where {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pallet-tile-note {
+  font-size: 14px;
+  font-style: italic;
+}
+.sector-pallets {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}

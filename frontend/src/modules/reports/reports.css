@@ -1,0 +1,161 @@
+/* Reports (module "reports") ------------------------------------------------------ */
+
+.rp-tabs {
+  margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.rp-tabs button {
+  white-space: nowrap;
+}
+
+.rp-toolbar {
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.rp-export {
+  margin-left: auto;
+}
+
+.rp-period {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rp-date {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.filters .rp-date .input {
+  min-width: 0;
+  width: 160px;
+}
+.rp-presets {
+  display: flex;
+  gap: 4px;
+}
+.rp-preset {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.rp-preset:hover {
+  color: var(--text);
+}
+.rp-preset.is-active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.rp-stat:hover {
+  border-color: var(--border);
+}
+.rp-stat .stat-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rp-stat-hint {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sortable headers */
+.rp-table th {
+  padding: 0;
+}
+.rp-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rp-table th.num .rp-sort {
+  justify-content: flex-end;
+}
+.rp-sort-arrow {
+  font-size: 10px;
+  opacity: 0.35;
+}
+.rp-sort.is-active {
+  color: var(--primary);
+}
+.rp-sort.is-active .rp-sort-arrow {
+  opacity: 1;
+}
+
+/* Inline bar proportional to the column maximum */
+.rp-bar-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  min-width: 90px;
+}
+.rp-bar {
+  display: block;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.rp-bar span {
+  display: block;
+  height: 100%;
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--primary);
+  opacity: 0.7;
+}
+
+.rp-empty-badge {
+  margin-left: 6px;
+}
+.rp-limit {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .rp-toolbar,
+  .rp-period {
+    width: 100%;
+  }
+  .rp-date {
+    flex: 1 1 130px;
+  }
+  .filters .rp-date .input {
+    width: 100%;
+  }
+  .rp-export {
+    width: 100%;
+  }
+  .rp-panel .filters .input {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+}

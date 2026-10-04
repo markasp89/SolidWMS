@@ -7,9 +7,7 @@ import { ProductsPage } from './pages/ProductsPage'
 import { SearchPage } from './pages/SearchPage'
 
 export const inventoryModule: AppModule = {
-  id: 'inventory',
-  name: 'Produkty i stany',
-  description: 'Produkty, ich lokalizacje w sektorach, wyszukiwarka i historia operacji.',
+  key: 'inventory',
   routes: [
     { path: '/search', element: <SearchPage /> },
     { path: '/products', element: <ProductsPage /> },
@@ -19,7 +17,7 @@ export const inventoryModule: AppModule = {
   nav: [
     { to: '/search', label: 'Gdzie jest?', icon: 'search', order: 10 },
     { to: '/products', label: 'Produkty', icon: 'box', order: 30 },
-    { to: '/movements', label: 'Historia', icon: 'history', order: 40 },
+    { to: '/movements', label: 'Historia', icon: 'history', order: 90 },
   ],
   extensions: {
     'warehouse.sectorPanel': SectorStockPanel,
@@ -27,6 +25,14 @@ export const inventoryModule: AppModule = {
   },
 }
 
-export { inventoryApi } from './api'
+// Public API of the module for other modules.
+export { inventoryApi, isDeleted } from './api'
+export { ExpiryBadge } from './components/ExpiryBadge'
+export { LocationList } from './components/LocationList'
+export { LocationsMap } from './components/LocationsMap'
 export { MovementList } from './components/MovementList'
-export type { Movement, Product } from './types'
+export { ProductPicker } from './components/ProductPicker'
+export { loadSectorsCached, SectorSelect } from './components/SectorSelect'
+export { DimensionFields, describeLocation, ReceiveModal } from './components/StockModals'
+export { notifyStockChanged, useStockVersion } from './stockEvents'
+export type { LocationDimensions, Movement, Product, SectorSummary, StockItem } from './types'

@@ -1,13 +1,12 @@
 import { useState } from 'react'
-import { useModules } from '@/core/modules/registry'
 import { Button } from '@/core/ui/Button'
 import { useFeedback } from '@/core/ui/feedback'
 import { Card, PageHeader } from '@/core/ui/misc'
 import { settingsApi, type ImportSummary } from './api'
 import { ImportModal } from './ImportModal'
+import { ModulesPanel } from './ModulesPanel'
 
 export function SettingsPage() {
-  const modules = useModules()
   const { toast } = useFeedback()
   const [includeImages, setIncludeImages] = useState(true)
   const [exporting, setExporting] = useState(false)
@@ -29,6 +28,9 @@ export function SettingsPage() {
     <>
       <PageHeader title="Ustawienia" />
 
+      <ModulesPanel />
+
+      <h2 className="section-title">Dane</h2>
       <div className="settings-grid">
         <Card title="Eksport danych">
           <p className="muted">
@@ -63,13 +65,15 @@ export function SettingsPage() {
                 {(
                   [
                     ['Magazyny', summary.warehouses],
+                    ['Piętra', summary.floors],
                     ['Sektory', summary.sectors],
                     ['Produkty', summary.products],
+                    ['Palety', summary.pallets],
                     ['Lokalizacje', summary.stock],
                   ] as const
                 ).map(([label, s]) => (
                   <li key={label}>
-                    {label}: {s.created} nowych, {s.updated} zaktualizowanych
+                    {label}: {s?.created ?? 0} nowych, {s?.updated ?? 0} zaktualizowanych
                   </li>
                 ))}
                 <li>Rzuty magazynów: {summary.floor_plans.imported}</li>
@@ -78,16 +82,7 @@ export function SettingsPage() {
           )}
         </Card>
 
-        <Card title="Moduły">
-          <ul className="modules-list">
-            {modules.map((m) => (
-              <li key={m.id}>
-                <strong>{m.name}</strong> <code>{m.id}</code>
-                {m.description && <div className="muted">{m.description}</div>}
-              </li>
-            ))}
-          </ul>
-        </Card>
+
       </div>
 
       {importing && (

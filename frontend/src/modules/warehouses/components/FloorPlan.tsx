@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type Pointer
 import { apiUrl } from '@/core/api/client'
 import { Icon } from '@/core/ui/Icon'
 import { centroid, clamp01, contrastColor, DEFAULT_PLAN, rectangle, round4, toSvgPoints } from '../geometry'
-import type { Point, Sector, Warehouse } from '../types'
+import type { FloorPlan as FloorPlanImage, Point, Sector, Warehouse } from '../types'
 
 export type EditorMode = 'select' | 'rect' | 'polygon'
 
@@ -26,6 +26,8 @@ export interface FloorPlanOverlayProps {
 
 interface FloorPlanProps {
   warehouse: Warehouse
+  /** Plan to show instead of the warehouse's main plan (e.g. another floor). */
+  plan?: FloorPlanImage | null
   sectors: Sector[]
   selectedId?: number | null
   highlightIds?: number[]
@@ -47,6 +49,7 @@ const ZOOM_LEVELS = [1, 1.5, 2, 3, 4]
 
 export function FloorPlan({
   warehouse,
+  plan: planOverride,
   sectors,
   selectedId = null,
   highlightIds = [],
@@ -56,8 +59,9 @@ export function FloorPlan({
   toolbar,
   compact = false,
 }: FloorPlanProps) {
-  const width = warehouse.floor_plan?.width ?? DEFAULT_PLAN.width
-  const height = warehouse.floor_plan?.height ?? DEFAULT_PLAN.height
+  const plan = planOverride !== undefined ? planOverride : warehouse.floor_plan
+  const width = plan?.width ?? DEFAULT_PLAN.width
+  const height = plan?.height ?? DEFAULT_PLAN.height
   const svgRef = useRef<SVGSVGElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = useState(1)
@@ -253,10 +257,10 @@ export function FloorPlan({
 
       <div className="plan-viewport" ref={viewportRef}>
         <div className="plan-stage" style={{ width: `${zoom * 100}%`, aspectRatio: `${width} / ${height}` }}>
-          {warehouse.floor_plan && !imageFailed ? (
+          {plan && !imageFailed ? (
             <img
               className="plan-image"
-              src={apiUrl(warehouse.floor_plan.url)}
+              src={apiUrl(plan.url)}
               alt={`Rzut magazynu ${warehouse.name}`}
               draggable={false}
               onError={() => setImageFailed(true)}

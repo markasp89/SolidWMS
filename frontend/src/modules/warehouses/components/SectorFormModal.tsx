@@ -8,12 +8,14 @@ interface Props {
   sector?: Sector
   /** Shape for a new sector (drawn on the plan). */
   shape?: Point[] | null
+  /** Floor of a new sector (module "floors"). */
+  floorId?: number | null
   suggestedCode?: string
   onClose: () => void
   onSaved: (sector: Sector) => void
 }
 
-export function SectorFormModal({ warehouseId, sector, shape, suggestedCode = '', onClose, onSaved }: Props) {
+export function SectorFormModal({ warehouseId, sector, shape, floorId = null, suggestedCode = '', onClose, onSaved }: Props) {
   const form = useForm(
     {
       code: sector?.code ?? suggestedCode,
@@ -31,7 +33,7 @@ export function SectorFormModal({ warehouseId, sector, shape, suggestedCode = ''
       onSubmit: async (v) => {
         const saved = sector
           ? await warehousesApi.updateSector(sector.id, v)
-          : await warehousesApi.createSector(warehouseId, { ...v, shape: shape ?? null })
+          : await warehousesApi.createSector(warehouseId, { ...v, shape: shape ?? null, floor_id: floorId })
         onSaved(saved)
       },
     },

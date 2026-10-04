@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { isQueued } from '@/core/api/client'
 import { useAsync } from '@/core/hooks/useAsync'
 import { Button } from '@/core/ui/Button'
 import { useFeedback } from '@/core/ui/feedback'
@@ -37,9 +38,9 @@ export function SectorStockPanel({ sector }: { warehouse: Warehouse; sector: Sec
           sectorId={sector.id}
           sectorLabel={sector.code}
           onClose={() => setAdding(false)}
-          onDone={() => {
+          onDone={(result) => {
             setAdding(false)
-            toast('Towar dodany do sektora.')
+            toast(isQueued(result) ? 'Brak sieci – operacja czeka w kolejce.' : 'Towar dodany do sektora.', isQueued(result) ? 'info' : 'success')
             notifyStockChanged()
           }}
         />

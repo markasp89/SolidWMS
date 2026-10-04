@@ -4,6 +4,8 @@ export type Point = [number, number]
 export interface Sector {
   id: number
   warehouse_id: number
+  /** Floor (module "floors"); null = main floor plan of the warehouse. */
+  floor_id?: number | null
   code: string
   name: string
   color: string
@@ -29,4 +31,13 @@ export interface Warehouse {
   sectors_count?: number
   sectors?: Sector[]
   updated_at?: string
+}
+
+export interface Floor {
+  id: number
+  warehouse_id: number
+  name: string
+  level: number
+  floor_plan: FloorPlan | null
+  sectors_count?: number
 }

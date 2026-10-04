@@ -9,6 +9,8 @@ interface AuthState {
   logout: () => Promise<void>
   hasRole: (...roles: Role[]) => boolean
   isAdmin: boolean
+  /** Administrator or shift manager. */
+  isManager: boolean
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -55,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       hasRole: (...roles) => user !== null && roles.includes(user.role),
       isAdmin: user?.role === 'admin',
+      isManager: user?.role === 'admin' || user?.role === 'manager',
     }),
     [user, loading, login, logout],
   )

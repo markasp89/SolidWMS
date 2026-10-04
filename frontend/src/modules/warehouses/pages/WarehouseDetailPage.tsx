@@ -2,16 +2,17 @@ import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/core/auth/AuthContext'
 import { useAsync } from '@/core/hooks/useAsync'
-import { Extension } from '@/core/modules/registry'
+import { Extension, useModuleEnabled } from '@/core/modules/registry'
 import { Button } from '@/core/ui/Button'
 import { useFeedback } from '@/core/ui/feedback'
 import { Icon } from '@/core/ui/Icon'
 import { Card, ColorDot, EmptyState, ErrorMessage, PageHeader, Spinner } from '@/core/ui/misc'
 import { warehousesApi } from '../api'
 import { FloorPlan, type EditorMode } from '../components/FloorPlan'
+import { FloorFormModal } from '../components/FloorFormModal'
 import { SectorFormModal } from '../components/SectorFormModal'
 import { WarehouseFormModal } from '../components/WarehouseFormModal'
-import type { Point, Sector, Warehouse } from '../types'
+import type { Floor, Point, Sector, Warehouse } from '../types'
 
 export function WarehouseDetailPage() {
   const { id } = useParams()
@@ -37,10 +38,39 @@ export function WarehouseDetailPage() {
   const selected = sectors.find((s) => s.id === selectedId) ?? null
   const highlightIds = params.get('highlight')?.split(',').map(Number).filter(Boolean) ?? []
 
+  // Floors (module "floors"): every floor has its own plan and sectors.
+  const floorsEnabled = useModuleEnabled('floors')
+  const floorsState = useAsync(
+    (signal) => (floorsEnabled ? warehousesApi.floors(Number(id), signal) : Promise.resolve([] as Floor[])),
+    [id, floorsEnabled],
+  )
+  const floors = floorsState.data ?? []
+  const [editFloor, setEditFloor] = useState<Floor | 'new' | null>(null)
+  const highlightedFloor = sectors.find((s) => highlightIds.includes(s.id))?.floor_id
+  const currentFloorId: number | null = !floorsEnabled
+    ? null
+    : params.has('floor')
+      ? Number(params.get('floor')) || null
+      : (selected?.floor_id ?? highlightedFloor ?? null)
+  const currentFloor = floors.find((f) => f.id === currentFloorId) ?? null
+  const floorSectors = floorsEnabled ? sectors.filter((s) => (s.floor_id ?? null) === (currentFloor?.id ?? null)) : sectors
+  const plan = currentFloor ? currentFloor.floor_plan : (warehouse?.floor_plan ?? null)
+  const floorName = (floorId: number | null | undefined) => floors.find((f) => f.id === floorId)?.name ?? 'Rzut główny'
+
+  const selectFloor = (floorId: number | null) => {
+    const next = new URLSearchParams(params)
+    next.set('floor', String(floorId ?? 0))
+    next.delete('sector')
+    next.delete('highlight')
+    setParams(next, { replace: true })
+  }
+
   const select = (sector: Sector | null) => {
     const next = new URLSearchParams(params)
-    if (sector) next.set('sector', String(sector.id))
-    else next.delete('sector')
+    if (sector) {
+      next.set('sector', String(sector.id))
+      if (floorsEnabled) next.set('floor', String(sector.floor_id ?? 0))
+    } else next.delete('sector')
     next.delete('highlight')
     setParams(next, { replace: true })
   }
@@ -116,8 +146,13 @@ export function WarehouseDetailPage() {
     if (!file || !warehouse) return
     setUploading(true)
     try {
-      setData(await warehousesApi.uploadFloorPlan(warehouse.id, file))
-      toast('Rzut magazynu został wgrany.')
+      if (currentFloor) {
+        const updated = await warehousesApi.uploadFloorPlanOf(currentFloor.id, file)
+        floorsState.setData((list) => (list ?? []).map((f) => (f.id === updated.id ? updated : f)))
+      } else {
+        setData(await warehousesApi.uploadFloorPlan(warehouse.id, file))
+      }
+      toast('Rzut został wgrany.')
     } catch (e) {
       toast((e as Error).message, 'error')
     } finally {
@@ -135,7 +170,29 @@ export function WarehouseDetailPage() {
     })
     if (!ok) return
     try {
-      setData(await warehousesApi.removeFloorPlan(warehouse.id))
+      if (currentFloor) {
+        const updated = await warehousesApi.removeFloorPlanOf(currentFloor.id)
+        floorsState.setData((list) => (list ?? []).map((f) => (f.id === updated.id ? updated : f)))
+      } else {
+        setData(await warehousesApi.removeFloorPlan(warehouse.id))
+      }
+    } catch (e) {
+      toast((e as Error).message, 'error')
+    }
+  }
+
+  const deleteFloor = async (floor: Floor) => {
+    const ok = await confirm({
+      title: 'Usunąć piętro?',
+      message: `Piętro „${floor.name}” i jego rzut zostaną usunięte. Najpierw usuń sektory z tego piętra.`,
+      confirmLabel: 'Usuń piętro',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      await warehousesApi.removeFloor(floor.id)
+      floorsState.setData((list) => (list ?? []).filter((f) => f.id !== floor.id))
+      selectFloor(null)
     } catch (e) {
       toast((e as Error).message, 'error')
     }
@@ -214,9 +271,9 @@ export function WarehouseDetailPage() {
         <div className="editor-bar">
           <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={uploadPlan} />
           <Button icon="upload" loading={uploading} onClick={() => fileInput.current?.click()}>
-            {warehouse.floor_plan ? 'Zmień rzut' : 'Wgraj rzut magazynu'}
+            {plan ? 'Zmień rzut' : currentFloor ? `Wgraj rzut: ${currentFloor.name}` : 'Wgraj rzut magazynu'}
           </Button>
-          {warehouse.floor_plan && (
+          {plan && (
             <Button icon="trash" variant="ghost" onClick={removePlan}>
               Usuń rzut
             </Button>
@@ -237,9 +294,40 @@ export function WarehouseDetailPage() {
 
       <div className="split">
         <div className="split-main">
+          {floorsEnabled && (floors.length > 0 || (isAdmin && editing)) && (
+            <div className="floor-tabs" role="tablist" aria-label="Piętra">
+              {[null, ...floors].map((floor) => (
+                <button
+                  key={floor?.id ?? 'main'}
+                  type="button"
+                  role="tab"
+                  aria-selected={(currentFloor?.id ?? null) === (floor?.id ?? null)}
+                  className={(currentFloor?.id ?? null) === (floor?.id ?? null) ? 'is-active' : ''}
+                  onClick={() => selectFloor(floor?.id ?? null)}
+                >
+                  <Icon name="layers" size={15} /> {floor?.name ?? 'Rzut główny'}
+                </button>
+              ))}
+              {isAdmin && editing && (
+                <>
+                  <Button size="sm" variant="ghost" icon="plus" onClick={() => setEditFloor('new')}>
+                    Piętro
+                  </Button>
+                  {currentFloor && (
+                    <>
+                      <Button size="sm" variant="ghost" icon="edit" onClick={() => setEditFloor(currentFloor)} aria-label="Zmień piętro" title="Zmień nazwę piętra" />
+                      <Button size="sm" variant="ghost" icon="trash" onClick={() => deleteFloor(currentFloor)} aria-label="Usuń piętro" title="Usuń piętro" />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
           <FloorPlan
+            key={currentFloor?.id ?? 'main'}
             warehouse={warehouse}
-            sectors={sectors}
+            plan={plan}
+            sectors={floorSectors}
             selectedId={selectedId}
             highlightIds={highlightIds}
             onSelect={select}
@@ -297,6 +385,10 @@ export function WarehouseDetailPage() {
                   </Button>
                 </div>
               )}
+              {floorsEnabled && selected.floor_id && <p className="muted">Piętro: {floorName(selected.floor_id)}</p>}
+              <div className="button-row">
+                <Extension name="sector.actions" props={{ warehouse, sector: selected }} />
+              </div>
               <Extension name="warehouse.sectorPanel" props={{ warehouse, sector: selected }} />
             </Card>
           ) : (
@@ -332,6 +424,7 @@ export function WarehouseDetailPage() {
                         <ColorDot color={s.color} />
                         <strong>{s.code}</strong>
                         <span className="list-item-text">{s.name}</span>
+                        {floorsEnabled && s.floor_id && <span className="badge">{floorName(s.floor_id)}</span>}
                         {!s.shape && <span className="badge badge-warn">bez obszaru</span>}
                         <Icon name="chevronRight" size={16} />
                       </button>
@@ -348,6 +441,7 @@ export function WarehouseDetailPage() {
         <SectorFormModal
           warehouseId={warehouse.id}
           shape={newShape}
+          floorId={currentFloor?.id ?? null}
           suggestedCode={nextCode}
           onClose={() => setNewShape(null)}
           onSaved={(s) => {
@@ -362,6 +456,7 @@ export function WarehouseDetailPage() {
         <SectorFormModal
           warehouseId={warehouse.id}
           suggestedCode={nextCode}
+          floorId={currentFloor?.id ?? null}
           onClose={() => setAddWithoutShape(false)}
           onSaved={(s) => {
             setAddWithoutShape(false)
@@ -379,6 +474,21 @@ export function WarehouseDetailPage() {
             setEditSector(null)
             replaceSector(s)
             toast('Zapisano zmiany.')
+          }}
+        />
+      )}
+      {editFloor && (
+        <FloorFormModal
+          warehouseId={warehouse.id}
+          floor={editFloor === 'new' ? undefined : editFloor}
+          onClose={() => setEditFloor(null)}
+          onSaved={(floor) => {
+            setEditFloor(null)
+            floorsState.setData((list) => {
+              const rest = (list ?? []).filter((f) => f.id !== floor.id)
+              return [...rest, floor].sort((a, b) => a.level - b.level || a.id - b.id)
+            })
+            selectFloor(floor.id)
           }}
         />
       )}

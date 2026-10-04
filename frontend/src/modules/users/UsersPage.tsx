@@ -4,6 +4,7 @@ import { useAuth } from '@/core/auth/AuthContext'
 import type { User } from '@/core/auth/types'
 import { formatDateTime } from '@/core/format'
 import { useAsync } from '@/core/hooks/useAsync'
+import { Extension } from '@/core/modules/registry'
 import { Button } from '@/core/ui/Button'
 import { useFeedback } from '@/core/ui/feedback'
 import { CheckboxField, collectErrors, FormModal, rules, SelectField, TextField, useForm } from '@/core/ui/form'
@@ -36,7 +37,7 @@ export function UsersPage() {
     <>
       <PageHeader
         title="Użytkownicy"
-        subtitle="Administrator definiuje magazyny i sektory, pracownik zarządza produktami i ilościami."
+        subtitle="Administrator definiuje magazyny i sektory, kierownik zatwierdza i raportuje, pracownik zarządza produktami i ilościami."
         actions={
           <Button variant="primary" icon="plus" onClick={() => setEditing('new')}>
             Nowy użytkownik
@@ -66,11 +67,12 @@ export function UsersPage() {
                   </td>
                   <td>{u.email}</td>
                   <td>
-                    <span className={`badge ${u.role === 'admin' ? 'badge-admin' : ''}`}>{u.role_label}</span>
+                    <span className={`badge ${u.role === 'admin' ? 'badge-admin' : u.role === 'manager' ? 'badge-manager' : ''}`}>{u.role_label}</span>
                   </td>
                   <td>{u.is_active ? 'Aktywny' : <span className="badge badge-warn">Nieaktywny</span>}</td>
                   <td className="nowrap">{formatDateTime(u.created_at)}</td>
                   <td className="actions">
+                    <Extension name="user.actions" props={{ user: u }} />
                     <Button size="sm" icon="edit" variant="ghost" onClick={() => setEditing(u)} aria-label="Edytuj" />
                     {u.id !== me?.id && (
                       <Button size="sm" icon="trash" variant="ghost" onClick={() => remove(u)} aria-label="Usuń" />
@@ -135,6 +137,7 @@ function UserFormModal({ user, isSelf, onClose, onSaved }: { user?: User; isSelf
         disabled={isSelf}
         options={[
           { value: 'worker', label: 'Pracownik – produkty i ilości' },
+          { value: 'manager', label: 'Kierownik zmiany – zatwierdzanie, raporty, usuwanie produktów' },
           { value: 'admin', label: 'Administrator – magazyny, sektory, użytkownicy' },
         ]}
       />

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '@/core/api/client'
 import { useAuth } from '@/core/auth/AuthContext'
 import { useAsync } from '@/core/hooks/useAsync'
+import { Extension } from '@/core/modules/registry'
 import { Icon } from '@/core/ui/Icon'
 import { Card, EmptyState, ErrorMessage, PageHeader, Spinner } from '@/core/ui/misc'
 import { MovementList, type Movement } from '@/modules/inventory'
@@ -64,6 +65,10 @@ export function DashboardPage() {
           </Link>
         </div>
       )}
+
+      <div className="widgets">
+        <Extension name="dashboard.widgets" props={{}} />
+      </div>
 
       {data && (
         <Card title="Ostatnie operacje" actions={<Link to="/movements">Cała historia →</Link>}>

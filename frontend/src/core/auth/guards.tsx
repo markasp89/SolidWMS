@@ -19,7 +19,7 @@ export function RequireRole({ roles, children }: { roles?: Role[]; children: Rea
   if (roles && !hasRole(...roles)) {
     return (
       <EmptyState icon="close" title="Brak dostępu">
-        Ta sekcja jest dostępna tylko dla administratora.
+        Nie masz uprawnień do tej sekcji.
       </EmptyState>
     )
   }

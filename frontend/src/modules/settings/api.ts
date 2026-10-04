@@ -2,6 +2,8 @@ import { api, rawRequest } from '@/core/api/client'
 
 export interface ImportSummary {
   warehouses: { created: number; updated: number }
+  floors?: { created: number; updated: number }
+  pallets?: { created: number; updated: number }
   sectors: { created: number; updated: number }
   products: { created: number; updated: number }
   stock: { created: number; updated: number }
@@ -54,7 +56,7 @@ export function parseExport(text: string): { data?: ExportFile; error?: string }
   }
   const d = data as Partial<ExportFile>
   if (d.format !== undefined && d.format !== 'solidwms') return { error: 'To nie jest plik eksportu SolidWMS.' }
-  if (d.version !== 1) return { error: 'Nieobsługiwana wersja pliku (oczekiwano "version": 1).' }
+  if (d.version !== 1 && d.version !== 2) return { error: 'Nieobsługiwana wersja pliku (obsługiwane: 1 i 2).' }
   for (const key of ['warehouses', 'products', 'stock'] as const) {
     if (!Array.isArray(d[key])) return { error: `Brak listy "${key}" w pliku.` }
   }

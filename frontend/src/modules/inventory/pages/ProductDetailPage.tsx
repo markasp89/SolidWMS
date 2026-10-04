@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { isQueued } from '@/core/api/client'
 import { useAuth } from '@/core/auth/AuthContext'
 import { formatNumber } from '@/core/format'
 import { useAsync } from '@/core/hooks/useAsync'
+import { Extension } from '@/core/modules/registry'
 import { Button } from '@/core/ui/Button'
 import { useFeedback } from '@/core/ui/feedback'
 import { Card, EmptyState, ErrorMessage, PageHeader, Spinner } from '@/core/ui/misc'
@@ -16,7 +18,7 @@ import { notifyStockChanged, useStockVersion } from '../stockEvents'
 
 export function ProductDetailPage() {
   const { id } = useParams()
-  const { isAdmin } = useAuth()
+  const { isManager } = useAuth()
   const { toast, confirm } = useFeedback()
   const navigate = useNavigate()
   const version = useStockVersion()
@@ -76,7 +78,7 @@ export function ProductDetailPage() {
             <Button icon="edit" onClick={() => setEditing(true)}>
               Edytuj
             </Button>
-            {isAdmin && <Button icon="trash" variant="ghost" onClick={remove} aria-label="Usuń produkt" title="Usuń produkt" />}
+            {isManager && <Button icon="trash" variant="ghost" onClick={remove} aria-label="Usuń produkt" title="Usuń produkt" />}
           </>
         }
       />
@@ -102,6 +104,7 @@ export function ProductDetailPage() {
           </Card>
         </div>
         <aside className="split-side">
+          <Extension name="product.sidebar" props={{ product, onChanged: reload }} />
           <LocationsMap items={locations} />
         </aside>
       </div>
@@ -134,9 +137,9 @@ export function ProductDetailPage() {
         <ReceiveModal
           product={product}
           onClose={() => setAdding(false)}
-          onDone={() => {
+          onDone={(result) => {
             setAdding(false)
-            toast('Dodano lokalizację.')
+            toast(isQueued(result) ? 'Brak sieci – operacja czeka w kolejce.' : 'Dodano lokalizację.', isQueued(result) ? 'info' : 'success')
             notifyStockChanged()
           }}
         />

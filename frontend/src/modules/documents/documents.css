@@ -1,0 +1,67 @@
+.doc-editor .card {
+  margin-bottom: 0;
+}
+.doc-editor .form-actions {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.doc-hint {
+  margin: 0 0 12px;
+}
+
+.doc-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.doc-sector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.doc-qty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.doc-qty .input {
+  width: 96px;
+}
+
+.doc-line-invalid td {
+  background: var(--danger-soft);
+}
+
+.doc-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+.doc-info dt {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+.doc-info dd {
+  margin: 2px 0 0;
+}
+.doc-info-wide {
+  grid-column: 1 / -1;
+}
+.doc-note {
+  white-space: pre-wrap;
+}
+
+.doc-locations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom'
 import { formatDateTime, formatNumber } from '@/core/format'
 import type { Movement, SectorSummary } from '../types'
 
-const where = (s: SectorSummary | null) => (s ? `${s.warehouse?.code ?? '?'}/${s.code}` : '—')
+const where = (s: SectorSummary | null, slot?: string | null) =>
+  s ? `${s.warehouse?.code ?? '?'}/${s.code}${slot ? `-${slot}` : ''}` : '—'
 
 export function MovementList({ movements, showProduct = true }: { movements: Movement[]; showProduct?: boolean }) {
   return (
@@ -34,13 +35,16 @@ export function MovementList({ movements, showProduct = true }: { movements: Mov
                 {formatNumber(m.quantity)} {m.product?.unit}
               </td>
               <td className="nowrap">
-                {m.type === 'in' && `→ ${where(m.to_sector)}`}
+                {m.type === 'in' && `→ ${where(m.to_sector, m.slot)}`}
                 {m.type === 'out' && `${where(m.from_sector)} →`}
-                {m.type === 'move' && `${where(m.from_sector)} → ${where(m.to_sector)}`}
+                {m.type === 'move' && `${where(m.from_sector)} → ${where(m.to_sector, m.slot)}`}
                 {m.type === 'adjust' && where(m.to_sector)}
               </td>
               <td>{m.user?.name ?? '—'}</td>
-              <td className="muted">{m.note}</td>
+              <td className="muted">
+                {m.reference && <span className="badge">{m.reference}</span>} {m.batch && <span className="badge">partia {m.batch}</span>}{' '}
+                {m.note}
+              </td>
             </tr>
           ))}
         </tbody>

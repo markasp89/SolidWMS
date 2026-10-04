@@ -103,6 +103,7 @@ class StocktakeController extends Controller
 
     public function cancel(Request $request, Stocktake $stocktake): JsonResponse
     {
+        $this->scope->ensure($request->user(), $stocktake->sector->warehouse_id);
         $this->service->ensureOpen($stocktake);
         $stocktake->update(['status' => 'cancelled', 'completed_by' => $request->user()->id, 'completed_at' => now()]);
 

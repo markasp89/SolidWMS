@@ -2,6 +2,7 @@ import { collectErrors, FormModal, rules, TextAreaField, TextField, toNumber, us
 import { inventoryApi } from '../api'
 import type { Product } from '../types'
 import { SectorSelect } from './SectorSelect'
+import { DimensionFields } from './StockModals'
 
 interface Props {
   product?: Product
@@ -19,6 +20,9 @@ export function ProductFormModal({ product, onClose, onSaved }: Props) {
       description: product?.description ?? '',
       sector_id: '' as number | '',
       quantity: '',
+      slot: '',
+      batch: '',
+      expires_at: '',
     },
     {
       validate: (v) =>
@@ -30,12 +34,15 @@ export function ProductFormModal({ product, onClose, onSaved }: Props) {
           ['quantity', !product && v.sector_id !== '' && (rules.required(v.quantity) ?? rules.positive(v.quantity))],
           ['sector_id', !product && v.quantity.trim() !== '' && v.sector_id === '' && 'Wybierz sektor.'],
         ]),
-      onSubmit: async ({ sector_id, quantity, ...data }) => {
+      onSubmit: async ({ sector_id, quantity, slot, batch, expires_at, ...data }) => {
         const saved = product
           ? await inventoryApi.updateProduct(product.id, data)
           : await inventoryApi.createProduct({
               ...data,
-              initial_stock: sector_id !== '' ? { sector_id, quantity: toNumber(quantity) } : undefined,
+              initial_stock:
+                sector_id !== ''
+                  ? { sector_id, quantity: toNumber(quantity), slot: slot || null, batch: batch || null, expires_at: expires_at || null }
+                  : undefined,
             })
         onSaved(saved)
       },
@@ -64,6 +71,7 @@ export function ProductFormModal({ product, onClose, onSaved }: Props) {
             onChange={(v) => form.set('sector_id', v)}
             error={form.errors.sector_id ?? form.errors['initial_stock.sector_id']}
           />
+          <DimensionFields form={form} />
           <TextField form={form} name="quantity" label="Ilość" inputMode="decimal" className="w-sm" />
         </fieldset>
       )}
