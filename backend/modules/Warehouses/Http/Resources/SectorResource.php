@@ -14,6 +14,7 @@ class SectorResource extends JsonResource
         return [
             'id' => $this->id,
             'warehouse_id' => $this->warehouse_id,
+            'floor_id' => $this->floor_id,
             'code' => $this->code,
             'name' => $this->name,
             'color' => $this->color,

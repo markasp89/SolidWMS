@@ -15,6 +15,14 @@ class StockItemResource extends JsonResource
             'id' => $this->id,
             'product_id' => $this->product_id,
             'sector_id' => $this->sector_id,
+            'slot' => $this->slot,
+            'batch' => $this->batch,
+            'expires_at' => $this->expires_at?->toDateString(),
+            'pallet_id' => $this->pallet_id,
+            'pallet' => $this->when($this->relationLoaded('pallet'), fn () => $this->pallet ? [
+                'id' => $this->pallet->id,
+                'code' => $this->pallet->code,
+            ] : null),
             'quantity' => $this->quantity,
             'note' => $this->note,
             'product' => $this->whenLoaded('product', fn () => [

@@ -7,6 +7,8 @@ use Modules\Warehouses\Services\FloorPlanStorage;
 
 class WarehousesServiceProvider extends ModuleServiceProvider
 {
+    protected string $module = 'warehouses';
+
     public function register(): void
     {
         $this->app->singleton(FloorPlanStorage::class);

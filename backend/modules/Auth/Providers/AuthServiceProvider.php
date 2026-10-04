@@ -7,6 +7,8 @@ use Modules\Core\Support\ModuleServiceProvider;
 
 class AuthServiceProvider extends ModuleServiceProvider
 {
+    protected string $module = 'auth';
+
     protected function bootModule(): void
     {
         // Tokens of deactivated accounts stop working immediately.

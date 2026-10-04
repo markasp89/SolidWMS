@@ -35,6 +35,7 @@ class ProductRequest extends FormRequest
             'initial_stock.sector_id' => ['required_with:initial_stock', 'integer', 'exists:sectors,id'],
             'initial_stock.quantity' => ['required_with:initial_stock', 'numeric', 'gt:0', 'max:999999999'],
             'initial_stock.note' => ['nullable', 'string', 'max:255'],
+            ...StockOperationRequest::dimensionRules('initial_stock.'),
         ];
     }
 

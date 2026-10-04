@@ -18,7 +18,7 @@ class Sector extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['warehouse_id', 'code', 'name', 'color', 'description', 'shape'];
+    protected $fillable = ['warehouse_id', 'floor_id', 'code', 'name', 'color', 'description', 'shape'];
 
     protected $casts = [
         'shape' => 'array',

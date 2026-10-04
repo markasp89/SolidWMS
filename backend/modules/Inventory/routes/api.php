@@ -16,7 +16,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('products', [ProductController::class, 'store']);
     Route::get('products/{product}', [ProductController::class, 'show']);
     Route::match(['put', 'patch'], 'products/{product}', [ProductController::class, 'update']);
-    Route::delete('products/{product}', [ProductController::class, 'destroy'])->middleware('role:admin');
+    Route::delete('products/{product}', [ProductController::class, 'destroy'])->middleware('role:admin,manager');
 
     Route::get('stock', [StockController::class, 'index']);
     Route::get('warehouses/{warehouse}/stock-summary', [StockController::class, 'warehouseSummary']);

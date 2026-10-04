@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
+use Modules\Core\Contracts\WarehouseScope;
 use Modules\Inventory\Http\Requests\StockOperationRequest;
 use Modules\Inventory\Http\Resources\StockItemResource;
 use Modules\Inventory\Models\Product;
@@ -16,10 +17,13 @@ use Modules\Warehouses\Models\Warehouse;
 
 class StockController extends Controller
 {
-    public function __construct(private readonly StockService $stock) {}
+    public function __construct(
+        private readonly StockService $stock,
+        private readonly WarehouseScope $scope,
+    ) {}
 
     /**
-     * Stock locations filtered by sector, warehouse and/or product.
+     * Stock locations filtered by sector, warehouse, product and/or pallet.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -27,13 +31,16 @@ class StockController extends Controller
             'sector_id' => ['nullable', 'integer'],
             'warehouse_id' => ['nullable', 'integer'],
             'product_id' => ['nullable', 'integer'],
+            'pallet_id' => ['nullable', 'integer'],
             'q' => ['nullable', 'string', 'max:100'],
         ]);
 
         $items = StockItem::query()
-            ->with(['product', 'sector.warehouse', 'updatedBy'])
+            ->with(StockItem::$apiRelations)
+            ->inWarehouses($this->scope->allowedWarehouseIds($request->user()))
             ->when($request->filled('sector_id'), fn ($q) => $q->where('sector_id', $request->integer('sector_id')))
             ->when($request->filled('product_id'), fn ($q) => $q->where('product_id', $request->integer('product_id')))
+            ->when($request->filled('pallet_id'), fn ($q) => $q->where('pallet_id', $request->integer('pallet_id')))
             ->when($request->filled('warehouse_id'), fn ($q) => $q->whereHas(
                 'sector',
                 fn ($s) => $s->where('warehouse_id', $request->integer('warehouse_id'))
@@ -44,6 +51,7 @@ class StockController extends Controller
             ))
             ->join('products', 'products.id', '=', 'stock_items.product_id')
             ->orderBy('products.name')
+            ->orderBy('stock_items.slot')
             ->select('stock_items.*')
             ->limit(1000)
             ->get();
@@ -54,13 +62,15 @@ class StockController extends Controller
     /**
      * Per-sector totals used to colour the warehouse map.
      */
-    public function warehouseSummary(Warehouse $warehouse): JsonResponse
+    public function warehouseSummary(Request $request, Warehouse $warehouse): JsonResponse
     {
+        $this->scope->ensure($request->user(), $warehouse->id);
+
         $rows = StockItem::query()
             ->join('sectors', 'sectors.id', '=', 'stock_items.sector_id')
             ->where('sectors.warehouse_id', $warehouse->id)
             ->groupBy('stock_items.sector_id')
-            ->selectRaw('stock_items.sector_id, COUNT(*) as products_count, SUM(stock_items.quantity) as total_quantity')
+            ->selectRaw('stock_items.sector_id, COUNT(DISTINCT stock_items.product_id) as products_count, SUM(stock_items.quantity) as total_quantity')
             ->get()
             ->map(fn ($row) => [
                 'sector_id' => (int) $row->sector_id,
@@ -79,6 +89,7 @@ class StockController extends Controller
             (float) $request->input('quantity'),
             $request->user(),
             $request->input('note'),
+            $request->only(['slot', 'batch', 'expires_at']),
         );
 
         return $this->resource($item);
@@ -99,6 +110,7 @@ class StockController extends Controller
             (float) $request->input('quantity'),
             $request->user(),
             $request->input('note'),
+            ['slot' => $request->input('to_slot')],
         );
 
         return $this->resource($target);
@@ -119,6 +131,6 @@ class StockController extends Controller
 
     private function resource(StockItem $item): StockItemResource
     {
-        return new StockItemResource($item->fresh(['product', 'sector.warehouse', 'updatedBy']));
+        return new StockItemResource($item->fresh(StockItem::$apiRelations));
     }
 }

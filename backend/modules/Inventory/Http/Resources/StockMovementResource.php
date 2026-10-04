@@ -17,6 +17,10 @@ class StockMovementResource extends JsonResource
             'type_label' => $this->type->label(),
             'quantity' => $this->quantity,
             'note' => $this->note,
+            'reference' => $this->reference,
+            'slot' => $this->slot,
+            'batch' => $this->batch,
+            'pallet_id' => $this->pallet_id,
             'product' => $this->whenLoaded('product', fn () => [
                 'id' => $this->product->id,
                 'sku' => $this->product->sku,

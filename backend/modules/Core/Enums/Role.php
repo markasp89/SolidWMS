@@ -4,8 +4,11 @@ namespace Modules\Core\Enums;
 
 enum Role: string
 {
-    /** Defines warehouses, floor plans, sectors and users. */
+    /** Defines warehouses, floor plans, sectors, users and modules. */
     case Admin = 'admin';
+
+    /** Shift manager: everything a worker does plus approvals, reports and deleting products. */
+    case Manager = 'manager';
 
     /** Manages products and stock levels. */
     case Worker = 'worker';
@@ -14,6 +17,7 @@ enum Role: string
     {
         return match ($this) {
             self::Admin => 'Administrator',
+            self::Manager => 'Kierownik zmiany',
             self::Worker => 'Pracownik',
         };
     }

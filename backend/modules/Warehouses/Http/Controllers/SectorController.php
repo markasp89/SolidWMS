@@ -2,9 +2,11 @@
 
 namespace Modules\Warehouses\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
+use Modules\Core\Contracts\WarehouseScope;
 use Modules\Warehouses\Http\Requests\SectorRequest;
 use Modules\Warehouses\Http\Resources\SectorResource;
 use Modules\Warehouses\Models\Sector;
@@ -12,8 +14,12 @@ use Modules\Warehouses\Models\Warehouse;
 
 class SectorController extends Controller
 {
-    public function index(Warehouse $warehouse): AnonymousResourceCollection
+    public function __construct(private readonly WarehouseScope $scope) {}
+
+    public function index(Request $request, Warehouse $warehouse): AnonymousResourceCollection
     {
+        $this->scope->ensure($request->user(), $warehouse->id);
+
         return SectorResource::collection($warehouse->sectors);
     }
 
@@ -24,8 +30,10 @@ class SectorController extends Controller
         return new SectorResource($sector->load('warehouse'));
     }
 
-    public function show(Sector $sector): SectorResource
+    public function show(Request $request, Sector $sector): SectorResource
     {
+        $this->scope->ensure($request->user(), $sector->warehouse_id);
+
         return new SectorResource($sector->load('warehouse'));
     }
 

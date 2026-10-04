@@ -2,14 +2,16 @@
 
 namespace Modules\Warehouses\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Modules\Warehouses\Models\Warehouse;
 
 /**
- * Stores warehouse floor plans (top-down images) on the private "local" disk.
+ * Stores floor plans (top-down images) on the private "local" disk.
+ * Works with any model having floor_plan_path / floor_plan_width / floor_plan_height
+ * columns (warehouses, floors).
  */
 class FloorPlanStorage
 {
@@ -25,12 +27,12 @@ class FloorPlanStorage
         'image/gif' => 'gif',
     ];
 
-    public function storeUpload(Warehouse $warehouse, UploadedFile $file): Warehouse
+    public function storeUpload(Model $warehouse, UploadedFile $file): Model
     {
         return $this->storeContents($warehouse, (string) file_get_contents($file->getRealPath()));
     }
 
-    public function storeContents(Warehouse $warehouse, string $contents): Warehouse
+    public function storeContents(Model $warehouse, string $contents): Model
     {
         $info = @getimagesizefromstring($contents);
 
@@ -54,7 +56,7 @@ class FloorPlanStorage
         return $warehouse;
     }
 
-    public function remove(Warehouse $warehouse): Warehouse
+    public function remove(Model $warehouse): Model
     {
         $this->deleteFile($warehouse);
 
@@ -67,7 +69,7 @@ class FloorPlanStorage
         return $warehouse;
     }
 
-    public function contents(Warehouse $warehouse): ?string
+    public function contents(Model $warehouse): ?string
     {
         if (! $warehouse->floor_plan_path || ! Storage::disk(self::DISK)->exists($warehouse->floor_plan_path)) {
             return null;
@@ -76,7 +78,7 @@ class FloorPlanStorage
         return Storage::disk(self::DISK)->get($warehouse->floor_plan_path);
     }
 
-    public function deleteFile(Warehouse $warehouse): void
+    public function deleteFile(Model $warehouse): void
     {
         if ($warehouse->floor_plan_path) {
             $this->deletePath($warehouse->floor_plan_path);

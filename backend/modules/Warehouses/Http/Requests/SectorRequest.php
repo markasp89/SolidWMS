@@ -33,6 +33,8 @@ class SectorRequest extends FormRequest
             'name' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
             'color' => ['sometimes', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'description' => ['nullable', 'string', 'max:5000'],
+            // Floor of the warehouse (module "floors"); null = main floor plan.
+            'floor_id' => ['nullable', 'integer', Rule::exists('floors', 'id')->where('warehouse_id', $warehouseId)],
             'shape' => ['nullable', 'array', 'min:3', 'max:500'],
             'shape.*' => ['array', 'size:2'],
             'shape.*.*' => ['numeric', 'between:0,1'],

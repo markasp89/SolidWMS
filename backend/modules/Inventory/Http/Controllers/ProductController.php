@@ -7,14 +7,19 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Modules\Core\Contracts\WarehouseScope;
+use Modules\Core\Events\DomainEvent;
 use Modules\Inventory\Http\Requests\ProductRequest;
 use Modules\Inventory\Http\Resources\ProductResource;
 use Modules\Inventory\Models\Product;
+use Modules\Inventory\Models\StockItem;
 use Modules\Inventory\Services\StockService;
 use Modules\Warehouses\Models\Sector;
 
 class ProductController extends Controller
 {
+    public function __construct(private readonly WarehouseScope $scope) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $perPage = min(max((int) $request->integer('per_page', 25), 1), 100);
@@ -42,6 +47,7 @@ class ProductController extends Controller
                     (float) $initial['quantity'],
                     $request->user(),
                     $initial['note'] ?? null,
+                    $initial,
                 );
             }
 
@@ -53,7 +59,9 @@ class ProductController extends Controller
 
     public function show(Product $product): ProductResource
     {
-        $product->load(['stockItems' => fn ($q) => $q->with(['product', 'sector.warehouse', 'updatedBy'])->orderByDesc('quantity')])
+        $allowed = $this->scope->allowedWarehouseIds(request()->user());
+
+        $product->load(['stockItems' => fn ($q) => $q->with(StockItem::$apiRelations)->inWarehouses($allowed)->fefo()])
             ->loadSum('stockItems', 'quantity')
             ->loadCount('stockItems');
 
@@ -70,6 +78,7 @@ class ProductController extends Controller
     public function destroy(Product $product): Response
     {
         $product->delete();
+        event(new DomainEvent('product.deleted', ['id' => $product->id, 'sku' => $product->sku]));
 
         return response()->noContent();
     }
