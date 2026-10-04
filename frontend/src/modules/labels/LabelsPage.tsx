@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api, type Paginated } from '@/core/api/client'
 import { labelCode } from '@/core/codes'
+import { isDemo } from '@/core/demo'
+import { useFeedback } from '@/core/ui/feedback'
 import { useAsync } from '@/core/hooks/useAsync'
 import { useModuleEnabled } from '@/core/modules/registry'
 import { Button } from '@/core/ui/Button'
@@ -31,6 +33,7 @@ type Size = 'small' | 'large'
 export function LabelsPage() {
   const [params] = useSearchParams()
   const palletsEnabled = useModuleEnabled('pallets')
+  const { toast } = useFeedback()
   const [tab, setTab] = useState<'sectors' | 'pallets' | 'products'>(params.get('pallet') ? 'pallets' : params.get('product') ? 'products' : 'sectors')
   const [selected, setSelected] = useState<Map<string, Label>>(new Map())
   const [size, setSize] = useState<Size>('small')
@@ -111,7 +114,7 @@ export function LabelsPage() {
                 <option value="small">Małe (3 w rzędzie)</option>
                 <option value="large">Duże (2 w rzędzie)</option>
               </select>
-              <Button variant="primary" icon="printer" disabled={chosen.length === 0} onClick={() => window.print()}>
+              <Button variant="primary" icon="printer" disabled={chosen.length === 0} onClick={() => (isDemo ? toast('Drukowanie etykiet działa w pełnej wersji SolidWMS.', 'info') : window.print())}>
                 Drukuj ({chosen.length})
               </Button>
             </>

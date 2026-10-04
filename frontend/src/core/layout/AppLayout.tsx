@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/core/auth/AuthContext'
+import { isDemo, resetDemoData } from '@/core/demo'
 import { Extension, useModules } from '@/core/modules/registry'
 import { Icon } from '@/core/ui/Icon'
 
@@ -77,6 +78,25 @@ export function AppLayout() {
             <Extension name="topbar.actions" props={{}} />
           </div>
         </header>
+        {isDemo && (
+          <div className="demo-banner">
+            <span>
+              <strong>Wersja demo.</strong> Dane są przykładowe i zapisują się tylko w tej przeglądarce.
+            </span>
+            <button
+              type="button"
+              className="link"
+              onClick={async () => {
+                await resetDemoData()
+                await logout()
+                window.location.hash = '#/login'
+                window.location.reload()
+              }}
+            >
+              Przywróć dane demo
+            </button>
+          </div>
+        )}
         <main className="content">
           <Outlet />
         </main>

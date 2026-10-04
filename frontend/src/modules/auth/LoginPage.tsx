@@ -1,5 +1,7 @@
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuth } from '@/core/auth/AuthContext'
+import { DEMO_ACCOUNTS, isDemo } from '@/core/demo'
 import { collectErrors, Form, rules, TextField, useForm } from '@/core/ui/form'
 
 export function LoginPage() {
@@ -35,6 +37,10 @@ export function LoginPage() {
           </span>
         </div>
         <p className="login-subtitle">Zaloguj się, aby sprawdzić, gdzie leży towar.</p>
+        {isDemo && <DemoAccounts onPick={async (email) => {
+          await login(email, 'password')
+          navigate(from, { replace: true })
+        }} />}
         <Form form={form} submitLabel="Zaloguj się">
           <TextField form={form} name="email" label="E-mail" type="email" autoComplete="username" autoFocus required />
           <TextField
@@ -47,6 +53,37 @@ export function LoginPage() {
           />
         </Form>
       </div>
+    </div>
+  )
+}
+
+/** Demo: one tap logs in with one of the example roles. */
+function DemoAccounts({ onPick }: { onPick: (email: string) => Promise<void> }) {
+  const [busy, setBusy] = useState<string | null>(null)
+
+  return (
+    <div className="demo-accounts">
+      <p className="demo-accounts-title">Wersja demo – wybierz rolę:</p>
+      {DEMO_ACCOUNTS.map((account) => (
+        <button
+          key={account.email}
+          type="button"
+          className="demo-account"
+          disabled={busy !== null}
+          onClick={async () => {
+            setBusy(account.email)
+            try {
+              await onPick(account.email)
+            } finally {
+              setBusy(null)
+            }
+          }}
+        >
+          <strong>{account.label}</strong>
+          <span>{account.hint}</span>
+        </button>
+      ))}
+      <p className="demo-accounts-or">lub zaloguj się ręcznie (hasło: password)</p>
     </div>
   )
 }

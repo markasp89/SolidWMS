@@ -1,4 +1,5 @@
 import { setOfflineHandler } from '@/core/api/client'
+import { isDemo } from '@/core/demo'
 import { enqueue, flush, setOnline } from './queue'
 
 let started = false
@@ -19,7 +20,7 @@ export function startOffline() {
   void flush()
 
   const secure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-  if ('serviceWorker' in navigator && secure && import.meta.env.PROD) {
+  if ('serviceWorker' in navigator && secure && import.meta.env.PROD && !isDemo) {
     navigator.serviceWorker.register('/sw.js').catch(() => {
       // The app works without it, just not offline.
     })

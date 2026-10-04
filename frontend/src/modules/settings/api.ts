@@ -1,3 +1,4 @@
+import { saveFile } from '@/core/saveFile'
 import { api, rawRequest } from '@/core/api/client'
 
 export interface ImportSummary {
@@ -27,15 +28,7 @@ export const settingsApi = {
     const disposition = response.headers.get('Content-Disposition') ?? ''
     const filename =
       /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? `solidwms-export-${new Date().toISOString().slice(0, 10)}.json`
-
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    await saveFile(filename, blob)
   },
 
   import: (mode: 'merge' | 'replace', data: ExportFile) =>

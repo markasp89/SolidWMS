@@ -90,6 +90,13 @@ cd backend && php artisan test && vendor/bin/pint --test
 cd frontend && npm run build && npm run lint
 ```
 
+## Wersja demo (bez serwera)
+
+`npm run build:demo` w katalogu `frontend/` buduje jeden plik `dist-demo/solidwms-demo.html` z całą aplikacją.
+API odpowiada wtedy w przeglądarce (`frontend/src/demo/`), dane przykładowe zapisują się tylko na danym
+urządzeniu, a routing działa przez `#/…`. Plik nadaje się do pokazania aplikacji na telefonie bez instalowania
+Laravela. Aparat, druk etykiet i PDF działają tylko w pełnej wersji.
+
 ## Architektura modułowa
 
 ### Backend: `backend/modules/<Moduł>`

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { isDemo } from '@/core/demo'
 import { Button } from './Button'
 import { Modal } from './Modal'
 
@@ -25,6 +26,10 @@ export function ScannerModal({ title = 'Skanuj kod', hint, onResult, onClose }: 
     let cancelled = false
 
     const start = async () => {
+      if (isDemo) {
+        setError('W wersji demo aparat jest wyłączony. Wpisz kod poniżej, np. KART-40, CEM-25 albo SWMS:P:P-00001.')
+        return
+      }
       if (!navigator.mediaDevices?.getUserMedia) {
         setError('Ta przeglądarka nie daje dostępu do aparatu. Wpisz kod ręcznie lub użyj czytnika.')
         return

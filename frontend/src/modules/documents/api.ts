@@ -1,3 +1,4 @@
+import { saveFile } from '@/core/saveFile'
 import { api, rawRequest, type Paginated } from '@/core/api/client'
 import type { DocumentDetail, DocumentFilters, DocumentInput, DocumentSummary } from './types'
 
@@ -16,14 +17,6 @@ export const documentsApi = {
     const blob = await response.blob()
     const disposition = response.headers.get('Content-Disposition') ?? ''
     const filename = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? `${document.number.replaceAll('/', '-')}.pdf`
-
-    const url = URL.createObjectURL(blob)
-    const link = window.document.createElement('a')
-    link.href = url
-    link.download = filename
-    window.document.body.appendChild(link)
-    link.click()
-    link.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    await saveFile(filename, blob)
   },
 }

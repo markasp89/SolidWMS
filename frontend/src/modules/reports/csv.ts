@@ -1,3 +1,4 @@
+import { saveFile } from '@/core/saveFile'
 import { isoDate } from './dates'
 
 export type CsvValue = string | number | null | undefined
@@ -17,14 +18,6 @@ function csvCell(value: CsvValue): string {
 }
 
 /** Downloads the CSV generated in the browser, e.g. raport-rotacja-2026-10-04.csv. */
-export function downloadCsv(name: string, content: string) {
-  const blob = new Blob(['﻿', content], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `raport-${name}-${isoDate(new Date())}.csv`
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+export function downloadCsv(name: string, content: string): Promise<void> {
+  return saveFile(`raport-${name}-${isoDate(new Date())}.csv`, new Blob(['\ufeff', content], { type: 'text/csv;charset=utf-8' }))
 }

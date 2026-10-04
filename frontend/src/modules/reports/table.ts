@@ -61,11 +61,11 @@ export function useSortedRows<T>(rows: T[], columns: Column<T>[], initial: Sort)
 
 export function exportCsv<T>(name: string, rows: T[], columns: Column<T>[]) {
   const exported = columns.filter((c) => !c.tableOnly)
-  downloadCsv(
+  void downloadCsv(
     name,
     toCsv(
       exported.map((c) => c.label),
       rows.map((row) => exported.map((c) => c.value(row))),
     ),
-  )
+  ).catch(() => {})
 }

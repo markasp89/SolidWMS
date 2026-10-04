@@ -1,6 +1,7 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from '@/core/auth/AuthContext'
 import { RequireAuth, RequireRole } from '@/core/auth/guards'
+import { isDemo } from '@/core/demo'
 import { AppLayout } from '@/core/layout/AppLayout'
 import { ModulesProvider, useModuleRegistry } from '@/core/modules/registry'
 import { FeedbackProvider } from '@/core/ui/feedback'
@@ -36,14 +37,17 @@ function AppRoutes() {
   )
 }
 
+// The demo is a single file hosted under an arbitrary path, so it routes by URL hash.
+const Router = isDemo ? HashRouter : BrowserRouter
+
 export function App() {
   return (
     <AuthProvider>
       <ModulesProvider modules={modules}>
         <FeedbackProvider>
-          <BrowserRouter>
+          <Router>
             <AppRoutes />
-          </BrowserRouter>
+          </Router>
         </FeedbackProvider>
       </ModulesProvider>
     </AuthProvider>
