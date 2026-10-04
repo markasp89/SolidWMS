@@ -1,6 +1,7 @@
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '@/core/auth/AuthContext'
+import { Logo } from '@/core/ui/Logo'
 import { DEMO_ACCOUNTS, isDemo } from '@/core/demo'
 import { collectErrors, Form, rules, TextField, useForm } from '@/core/ui/form'
 
@@ -31,7 +32,7 @@ export function LoginPage() {
     <div className="login">
       <div className="login-card">
         <div className="brand brand-lg">
-          <img src="/favicon.svg" alt="" width={40} height={40} />
+          <Logo size={40} />
           <span>
             Solid<strong>WMS</strong>
           </span>

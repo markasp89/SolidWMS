@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/core/auth/AuthContext'
+import { Logo } from '@/core/ui/Logo'
 import { isDemo, resetDemoData } from '@/core/demo'
 import { Extension, useModules } from '@/core/modules/registry'
 import { Icon } from '@/core/ui/Icon'
@@ -29,7 +30,7 @@ export function AppLayout() {
     <div className={`layout ${menuOpen ? 'menu-open' : ''}`}>
       <aside className="sidebar">
         <div className="brand">
-          <img src="/favicon.svg" alt="" width={30} height={30} />
+          <Logo size={30} />
           <span>
             Solid<strong>WMS</strong>
           </span>
